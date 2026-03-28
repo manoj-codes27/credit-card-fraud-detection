@@ -72,18 +72,39 @@ if uploaded_file is not None:
 
     if st.button("Run Bulk Prediction"):
         try:
-            # Ensure correct number of features
-            if df.shape[1] != 30:
-                st.error("❌ CSV must contain exactly 30 features (Time, Amount, V1–V28)")
-            else:
-                X = scaler.transform(df)
-                preds = model.predict(X)
+            # Expected column order (VERY IMPORTANT)
+            expected_columns = [
+                'Time', 'Amount',
+                'V1','V2','V3','V4','V5','V6','V7','V8','V9','V10',
+                'V11','V12','V13','V14','V15','V16','V17','V18',
+                'V19','V20','V21','V22','V23','V24','V25','V26','V27','V28'
+            ]
 
-                df["Prediction"] = preds
-                df["Prediction"] = df["Prediction"].map({
-                    0: "Legitimate",
-                    1: "Fraud"
-                })
+            # Add missing columns (if any)
+            for col in expected_columns:
+                if col not in df.columns:
+                    df[col] = 0
+
+            # Reorder columns correctly
+            df = df[expected_columns]
+
+            # Scale
+            X = scaler.transform(df)
+
+            # Predict
+            preds = model.predict(X)
+
+            df["Prediction"] = preds
+            df["Prediction"] = df["Prediction"].map({
+                0: "Legitimate",
+                1: "Fraud"
+            })
+
+            st.success("✅ Bulk prediction completed!")
+            st.dataframe(df)
+
+        except Exception as e:
+            st.error(f"Error: {e}")
 
                 st.success("✅ Bulk prediction completed!")
                 st.dataframe(df)

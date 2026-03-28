@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import pickle
 
+st.write("UPDATED VERSION")
 # Load model and scaler
 scaler = pickle.load(open("app/scaler.pkl", "rb"))
 model = pickle.load(open("app/fraud_model.pkl", "rb"))

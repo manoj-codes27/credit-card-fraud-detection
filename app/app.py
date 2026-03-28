@@ -35,16 +35,14 @@ with col1:
     time = st.number_input("Transaction Time", min_value=0.0)
 
 with col2:
-    st.info("Note: V1–V28 are anonymized features")
-
-# Default V1–V28
-v_features = [0.0] * 28
+    st.info("Note: V1–V28 are anonymized features (set to 0)")
 
 if st.button("Predict"):
     try:
-        input_data = np.array([time, amount] + v_features).reshape(1, -1)
-        input_data = scaler.transform(input_data)
+        # Correct order: Time + V1–V28 + Amount
+        input_data = np.array([time] + [0]*28 + [amount]).reshape(1, -1)
 
+        input_data = scaler.transform(input_data)
         prediction = model.predict(input_data)
 
         if prediction[0] == 1:
@@ -72,26 +70,11 @@ if uploaded_file is not None:
 
     if st.button("Run Bulk Prediction"):
         try:
-            # Correct column order (VERY IMPORTANT)
-            expected_columns = [
-                'Time', 'Amount',
-                'V1','V2','V3','V4','V5','V6','V7','V8','V9','V10',
-                'V11','V12','V13','V14','V15','V16','V17','V18',
-                'V19','V20','V21','V22','V23','V24','V25','V26','V27','V28'
-            ]
+            # IMPORTANT: CSV must be in correct order:
+            # Time, V1, V2, ..., V28, Amount
 
-            # Add missing columns if needed
-            for col in expected_columns:
-                if col not in df.columns:
-                    df[col] = 0
+            X = scaler.transform(df.values)  # ✅ FIX: no column mismatch
 
-            # Reorder columns correctly
-            df = df[expected_columns]
-
-            # Scale data
-            X = scaler.transform(df)
-
-            # Predict
             preds = model.predict(X)
 
             df["Prediction"] = preds

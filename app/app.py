@@ -72,7 +72,7 @@ if uploaded_file is not None:
 
     if st.button("Run Bulk Prediction"):
         try:
-            # Expected column order (VERY IMPORTANT)
+            # Correct column order (VERY IMPORTANT)
             expected_columns = [
                 'Time', 'Amount',
                 'V1','V2','V3','V4','V5','V6','V7','V8','V9','V10',
@@ -80,7 +80,7 @@ if uploaded_file is not None:
                 'V19','V20','V21','V22','V23','V24','V25','V26','V27','V28'
             ]
 
-            # Add missing columns (if any)
+            # Add missing columns if needed
             for col in expected_columns:
                 if col not in df.columns:
                     df[col] = 0
@@ -88,7 +88,7 @@ if uploaded_file is not None:
             # Reorder columns correctly
             df = df[expected_columns]
 
-            # Scale
+            # Scale data
             X = scaler.transform(df)
 
             # Predict
@@ -102,12 +102,6 @@ if uploaded_file is not None:
 
             st.success("✅ Bulk prediction completed!")
             st.dataframe(df)
-
-        except Exception as e:
-            st.error(f"Error: {e}")
-
-                st.success("✅ Bulk prediction completed!")
-                st.dataframe(df)
 
         except Exception as e:
             st.error(f"Error: {e}")

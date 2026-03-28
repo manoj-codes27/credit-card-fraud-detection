@@ -4,8 +4,8 @@ import pandas as pd
 import pickle
 
 # Load model and scaler
-scaler = pickle.load(open("app/scaler.pkl", "rb"))
-model = pickle.load(open("app/fraud_model.pkl", "rb"))
+scaler = pickle.load(open("scaler.pkl", "rb"))
+model = pickle.load(open("fraud_model.pkl", "rb"))
 
 st.title("💳 Credit Card Fraud Detection")
 st.write("Predict whether a transaction is fraudulent or legitimate")

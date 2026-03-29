@@ -34,17 +34,21 @@ with col1:
 with col2:
     st.info("V1–V28 are hidden (default = 0)")
 
+# 🔥 Threshold slider (NEW)
+threshold = st.slider("Fraud Detection Sensitivity", 0.0, 1.0, 0.3)
+
 if st.button("Predict"):
     try:
         input_data = np.array([time] + [0]*28 + [amount]).reshape(1, -1)
         input_data = scaler.transform(input_data)
 
-        prediction = model.predict(input_data)
+        # 👉 Use probability
+        proba = model.predict_proba(input_data)[0][1]
 
-        if prediction[0] == 1:
-            st.error("🚨 Fraudulent Transaction Detected!")
+        if proba > threshold:
+            st.error(f"🚨 Fraud Detected! (Confidence: {proba:.2f})")
         else:
-            st.success("✅ Legitimate Transaction")
+            st.success(f"✅ Legitimate Transaction (Confidence: {proba:.2f})")
 
     except Exception as e:
         st.error(f"Error: {e}")
@@ -64,17 +68,19 @@ if uploaded_file is not None:
     st.write("📊 Uploaded Data Preview:")
     st.dataframe(df.head())
 
-    # 👉 Use a unique key to avoid button state issues
     if st.button("Run Bulk Prediction", key="bulk_predict"):
         try:
-            # Convert to numpy (prevents feature name mismatch)
+            # Convert to numpy
             X = scaler.transform(df.values)
 
-            # Predict
-            preds = model.predict(X)
+            # 👉 Use probability instead of direct prediction
+            proba = model.predict_proba(X)
 
-            # Create result dataframe (IMPORTANT FIX)
+            preds = (proba[:, 1] > threshold).astype(int)
+
             result_df = df.copy()
+            result_df["Fraud_Probability"] = proba[:, 1]
+
             result_df["Prediction"] = preds
             result_df["Prediction"] = result_df["Prediction"].map({
                 0: "Legitimate",
@@ -83,7 +89,6 @@ if uploaded_file is not None:
 
             st.success("✅ Bulk prediction completed!")
 
-            # 👉 Show ONLY final result (no confusion)
             st.write("📊 Final Results:")
             st.dataframe(result_df)
 

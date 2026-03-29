@@ -9,11 +9,8 @@ import os
 # =========================
 BASE_DIR = os.path.dirname(__file__)
 
-scaler_path = os.path.join(BASE_DIR, "scaler.pkl")
-model_path = os.path.join(BASE_DIR, "fraud_model.pkl")
-
-scaler = pickle.load(open(scaler_path, "rb"))
-model = pickle.load(open(model_path, "rb"))
+scaler = pickle.load(open(os.path.join(BASE_DIR, "scaler.pkl"), "rb"))
+model = pickle.load(open(os.path.join(BASE_DIR, "fraud_model.pkl"), "rb"))
 
 # =========================
 # UI
@@ -35,14 +32,13 @@ with col1:
     time = st.number_input("Transaction Time", min_value=0.0)
 
 with col2:
-    st.info("Note: V1–V28 are anonymized features (set to 0)")
+    st.info("V1–V28 are hidden (default = 0)")
 
 if st.button("Predict"):
     try:
-        # Correct order: Time + V1–V28 + Amount
         input_data = np.array([time] + [0]*28 + [amount]).reshape(1, -1)
-
         input_data = scaler.transform(input_data)
+
         prediction = model.predict(input_data)
 
         if prediction[0] == 1:
@@ -68,23 +64,28 @@ if uploaded_file is not None:
     st.write("📊 Uploaded Data Preview:")
     st.dataframe(df.head())
 
-    if st.button("Run Bulk Prediction"):
+    # 👉 Use a unique key to avoid button state issues
+    if st.button("Run Bulk Prediction", key="bulk_predict"):
         try:
-            # IMPORTANT: CSV must be in correct order:
-            # Time, V1, V2, ..., V28, Amount
+            # Convert to numpy (prevents feature name mismatch)
+            X = scaler.transform(df.values)
 
-            X = scaler.transform(df.values)  # ✅ FIX: no column mismatch
-
+            # Predict
             preds = model.predict(X)
 
-            df["Prediction"] = preds
-            df["Prediction"] = df["Prediction"].map({
+            # Create result dataframe (IMPORTANT FIX)
+            result_df = df.copy()
+            result_df["Prediction"] = preds
+            result_df["Prediction"] = result_df["Prediction"].map({
                 0: "Legitimate",
                 1: "Fraud"
             })
 
             st.success("✅ Bulk prediction completed!")
-            st.dataframe(df)
+
+            # 👉 Show ONLY final result (no confusion)
+            st.write("📊 Final Results:")
+            st.dataframe(result_df)
 
         except Exception as e:
             st.error(f"Error: {e}")
